@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="point_cloud_io" type="point_cloud_io_reader" name="point_cloud_reader" output="screen">
+    <remap from="pointcloud" to="reader_point_cloud"/>
+    <param name="file" value="$(find point_cloud_io)/clouds/scan_rgb_ref_ph_teta.txt"/>
+    <param name="frame" value="base_link"/>
+    <param name="skip" value="0"/>
+    <rosparam>
+        channels:
+          -
+            name    : x
+            row     : 0
+            factor  : 1.0
+            type    : float32
+          -
+            name    : y
+            row     : 1
+            factor  : 1.0
+            type    : float32
+          -
+            name    : z
+            row     : 2
+            factor  : 1.0
+            type    : float32
+          -
+            name    : r
+            row     : 4
+            factor  : 1.0
+            type    : uint8
+          -
+            name    : g
+            row     : 5
+            factor  : 1.0
+            type    : uint8
+          -
+            name    : b
+            row     : 6
+            factor  : 1.0
+            type    : uint8
+        
+        fields:
+          -
+            name    : x
+            type    : float32
+          -
+            name    : y
+            type    : float32
+          - 
+            name    : z
+            type    : float32
+          -
+            name    : rgb
+            type    : float32
+
+
+    </rosparam>
+  </node>
+</launch>
