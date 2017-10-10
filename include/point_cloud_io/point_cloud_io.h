@@ -53,28 +53,22 @@ namespace point_cloud_io{
         ChannelInfo(
             int row,
             std::string name,
-            std::string datatype,
             float factor
         )
         : row(row),
           name(name),
-          datatype(datatype),
-          factor(factor),
-          datatype_id(sensor_msgs::getPointFieldTypeFromString(datatype))
-        {
-            offset = current_offset_ ;
-            current_offset_ += sensor_msgs::sizeOfPointField(datatype_id);
-        }
+          factor(factor)
+        {}
 
-        const int row;
-        const std::string name;
-        const std::string datatype;
-        const float factor;
+        int row;
+        std::string name;
+        std::string datatype;
+        float factor;
         unsigned char* ptr;
         int offset;
         int step;
 
-        const int datatype_id;
+        int datatype_id;
 
         // to sort the channels
         bool operator< (const ChannelInfo &other) const {
@@ -88,8 +82,8 @@ namespace point_cloud_io{
 
     bool readPointCloudFromFile(
         const std::string& file,
-        std::vector<ChannelInfo*>& channels,
-        std::vector<sensor_msgs::PointCloud2Modifier::PointFieldInfo> fields_vector,
+        std::vector<ChannelInfo>& channels,
+        std::vector<sensor_msgs::PointCloud2Modifier::PointFieldInfo>& fields_vector,
         sensor_msgs::PointCloud2& cloud,
         int skip);
 

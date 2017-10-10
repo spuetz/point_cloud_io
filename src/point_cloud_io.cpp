@@ -54,8 +54,8 @@ namespace point_cloud_io{
 
 	bool readPointCloudFromFile(
 		const std::string& file,
-		std::vector<ChannelInfo*>& channels,
-		std::vector<sensor_msgs::PointCloud2Modifier::PointFieldInfo> fields_vector,
+		std::vector<ChannelInfo>& channels,
+		std::vector<sensor_msgs::PointCloud2Modifier::PointFieldInfo>& fields_vector,
 		sensor_msgs::PointCloud2& cloud,
 		int skip)
 	{	
@@ -91,18 +91,37 @@ namespace point_cloud_io{
   	    ROS_INFO_STREAM("Count of point fields: " << cloud.fields.size());
 
 		for(int i = 0; i != cloud.fields.size(); i++){
+			std::string name = cloud.fields[i].name;
+			int offset = cloud.fields[i].offset;
+			int count = cloud.fields[i].count;
+			int datatype = (int)cloud.fields[i].datatype;
+
+
 			ROS_INFO_STREAM("Field name: " << cloud.fields[i].name);
 			ROS_INFO_STREAM("Field datatype: " << (int) cloud.fields[i].datatype);
 			ROS_INFO_STREAM("Field offset: " << cloud.fields[i].offset);
 			ROS_INFO_STREAM("Field count: " << cloud.fields[i].count);
+			ROS_INFO_STREAM("-----");
+
+			// TODO replace channels by map (name, channel) entries
+			// Copy datatype and offset information
+			for(int j=0; j< channels.size(); j++){
+				if(channels[i].name == name){
+					ChannelInfo& info = channels[i];
+					info.datatype_id = datatype;
+					info.datatype = sensor_msgs::getPointFieldNameFromType(datatype);
+					info.offset = offset;
+				}
+			}
 		}
 
 		for(int i = 0; i != channels.size(); i++){
-			ChannelInfo* info = channels[i];
-			ROS_INFO_STREAM("ChannelInfo name: " << info->name);
-			ROS_INFO_STREAM("ChannelInfo type: " << info->datatype << "(" << info->datatype_id << ")");
-			ROS_INFO_STREAM("ChannelInfo offset: " << info->offset);
-			ROS_INFO_STREAM("ChannelInfo row: " << info->row);
+			ChannelInfo& info = channels[i];
+			ROS_INFO_STREAM("ChannelInfo name: " << info.name);
+			ROS_INFO_STREAM("ChannelInfo type: " << info.datatype << "(" << info.datatype_id << ")");
+			ROS_INFO_STREAM("ChannelInfo offset: " << info.offset);
+			ROS_INFO_STREAM("ChannelInfo row: " << info.row);
+			ROS_INFO_STREAM("-----");
 		}
 
 	    pcd_modifier.resize(size);
@@ -142,13 +161,13 @@ namespace point_cloud_io{
 			std::istream_iterator<std::string> end;
 			std::vector<std::string> values(begin, end);
 
-			for(std::vector<ChannelInfo*>::iterator iter = channels.begin();
+			for(std::vector<ChannelInfo>::iterator iter = channels.begin();
 				iter != channels.end(); ++iter){
-				double value = atof(values[(*iter)->row].c_str());
-				value *= (*iter)->factor; // multiply with factor
+				double value = atof(values[iter->row].c_str());
+				value *= iter->factor; // multiply with factor
 				sensor_msgs::writePointCloud2BufferValue<double>(
-					&cloud.data[i + ((*iter)->offset)],  // ptr to position in the buffer
-					(unsigned char)(*iter)->datatype_id, // datatype representation in the buffer
+					&cloud.data[i + (iter->offset)],  // ptr to position in the buffer
+					(unsigned char)iter->datatype_id, // datatype representation in the buffer
 					value 								 // value to write in the buffer
 				);
 			}

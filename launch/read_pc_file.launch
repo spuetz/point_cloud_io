@@ -36,7 +36,17 @@
             name    : b
             row     : 6
             factor  : 1.0
-            type    : uint8
+            type    : float32
+          -
+            name    : phi
+            row     : 8
+            factor  : 1.0
+            type    : float32
+          -
+            name    : theta
+            row     : 9
+            factor  : 1.0
+            type    : float32
         
         fields:
           -
@@ -49,9 +59,34 @@
             name    : z
             type    : float32
           -
-            name    : rgb
+            name    : r
+            type    : uint8
+          -
+            name    : g
+            type    : uint8
+          -
+            name    : b
+            type    : uint8
+          -
+            type    : uint8
+          -
+            type    : float32
+          -
+            type    : float32
+          -
+            type    : float32
+          -
+            name    : phi
+            type    : float32
+          -
+            name    : theta
             type    : float32
 
+        extra_fields:
+          -
+            name    : rgb
+            type    : float32
+            offset  : 12 
 
     </rosparam>
   </node>

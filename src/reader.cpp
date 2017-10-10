@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 
   int skip = 0;
 
-  XmlRpc::XmlRpcValue channels, fields;
+  XmlRpc::XmlRpcValue channels, fields, extra_fields;
 
   ros::NodeHandle private_node_handle_("~");
   private_node_handle_.getParam("channels", channels);
@@ -48,14 +48,14 @@ int main(int argc, char **argv)
   private_node_handle_.getParam("skip", skip);
   private_node_handle_.getParam("fields", fields);
 
-  std::vector<point_cloud_io::ChannelInfo*>channel_vector;
+  std::vector<point_cloud_io::ChannelInfo>channel_vector;
+
+  ROS_INFO("Reading the channel info...");
 
   for(int i=0; i<channels.size(); i++){
-  	point_cloud_io::ChannelInfo* info = 
-  		new point_cloud_io::ChannelInfo(
+  	point_cloud_io::ChannelInfo info(
 			channels[i]["row"],
 			channels[i]["name"],
-			channels[i]["type"],
 			(float) ((double)channels[i]["factor"])
   		);
     channel_vector.push_back(info);
@@ -63,15 +63,25 @@ int main(int argc, char **argv)
 
   std::vector<sensor_msgs::PointCloud2Modifier::PointFieldInfo> fields_vector;
 
+  ROS_INFO("Reading the point field info...");
+
   for(int i=0; i<fields.size(); i++){
     XmlRpc::XmlRpcValue field = fields[i];
 
-    std::string name = field["name"];
-  	std::string type = field["type"];
+    std::string name = ""; // empty name will work as a type offset in the buffer
+  	if(field.hasMember("name")){
+      name = std::string(field["name"]);
+    }
+    if(!field.hasMember("type")){
+      ROS_ERROR_STREAM("The field in the \"field\" param list has no \"type\" definition! Ignoring the field.");
+      continue;
+    }
+    std::string type = field["type"];
 
 	fields_vector.push_back(
 		sensor_msgs::PointCloud2Modifier::PointFieldInfo(name, type));
   }
+
 
   sensor_msgs::PointCloud2 cloud;
   cloud.header.frame_id = frame;
@@ -83,6 +93,24 @@ int main(int argc, char **argv)
         fields_vector,
         cloud,
         skip);
+
+  if(private_node_handle_.hasParam("extra_fields")) {
+    private_node_handle_.getParam("extra_fields", extra_fields);
+    ROS_INFO("Reading the extra point field info...");
+    for (int i = 0; i < extra_fields.size(); i++) {
+      XmlRpc::XmlRpcValue extra = extra_fields[i];
+      std::string name = extra["name"];
+      int offset = extra["offset"];
+      std::string type = extra["type"];
+
+      sensor_msgs::PointField point_field;
+      point_field.name = name;
+      point_field.datatype = sensor_msgs::getPointFieldTypeFromString(type);
+      point_field.count = 1;
+      point_field.offset = offset;
+      cloud.fields.push_back(point_field);
+    }
+  }
 
   cloud.header.stamp = ros::Time::now();
   cloud_pub.publish(cloud);
